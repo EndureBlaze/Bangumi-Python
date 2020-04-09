@@ -1,3 +1,11 @@
+import requests
+import json
+
+API_URL = "https://api.bgm.tv"
+headers = {
+	'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.1 Safari/605.1.15'
+}
+
 class CollectionStatus:
 	"""
 	收藏状态
@@ -196,10 +204,171 @@ class Episode:
 		self.desc = ''
 		self.status = ''
 
+class Topic:
+	"""
+	Discussion
+	"""
+	def __init__(self):
+		self.id = 0
+		self.url = ''
+		self.title = ''
+		self.main_id = 0
+		self.timestamp = 0
+		self.lastpost = 0
+		self.replies = 0
+		self.user = User()
 
+class Blog:
+	"""
+	
+	"""
+	def __init__(self):
+		self.id = 0
+		self.url = ''
+		self.title = ''
+		self.summary = ''
+		self.image = ''
+		self.replies = 0
+		self.timestamp = 0
+		self.dateline = ''
+		self.user = User()
 
+class SubjectCollection:
+	"""
+	Number of collection status
+	"""
+	def __init__(self):
+		self.wish = 0
+		self.collect = 0
+		self.doing = 0
+		self.on_hold = 0
+		self.dropped = 0
 
+class Subject:
+	"""
 
+	"""
+	def __init__(self):
+		self.id = 0
+		self.url = ''
+		self.type = 0
+		self.name = ''
+
+class SubjectBase:
+	"""
+
+	"""
+	def __init__(self):
+		self.id = 0
+		self.url = ''
+		self.type = 0
+		self.name = ''
+		self.name_cn = ''
+		self.summary = ''
+		self.air_date = ''
+		self.air_weekday = 0
+		self.images = {}
+
+class SubjectSmall(SubjectBase):
+	"""
+
+	"""
+	def __init__(self):
+		super().__init__()
+		self.eps = 0
+		self.eps_count = 0
+		self.rating = {}
+		self.rank = 0
+		self.collection = SubjectCollection()
+
+class SubjectMedium(SubjectSmall):
+	"""
+
+	"""
+	def __init__(self):
+		super().__init__()
+		self.crt = []
+		self.staff = []
+
+class SubjectLarge(SubjectBase):
+	""" """
+	def __init__(self):
+		super().__init__()
+
+class User:
+	""" """
+	def __init__(self, **kwargs):
+		self.id = 0
+		self.url = ''
+		self.username = ''
+		self.nickname = ''
+		self.avatar = Avatar()
+		self.sign = ''
+		self.usergroup = UserGroup()
+
+	def __check_username(self, username=''):
+		if username != '':
+			return username
+		elif self.username != '':
+			return self.username
+		elif self.id != 0:
+			return self.id
+
+	def get_user(self, username=''):
+		"""
+		返回用户基础信息
+		:param username: 用户名，也可使用 UID
+		"""
+		username = self.__check_username(username)
+		r = requests.get(API_URL + '/user/%s' % username, headers=headers)
+		loaded = json.loads(r.text)
+		self.id = loaded['id']
+		self.url = loaded['url']
+		self.username = loaded['username']
+		self.nickname = loaded['nickname']
+		self.avatar.large = loaded['avatar']['large']
+		self.avatar.medium = loaded['avatar']['medium']
+		self.avatar.small = loaded['avatar']['small']
+		self.sign = loaded['sign']
+		self.usergroup.type_id = loaded['usergroup']
+		self.usergroup.get_type(self.usergroup.type_id)
+		return r.text
+
+	def get_user_collection(self, cat='watching', ids='', response_group='medium'):
+		username = self.__check_username()
+		params = {
+			'cat': cat,
+			'ids': ids,
+			'responseGroup': response_group
+		}
+		r = requests.get(API_URL + '/user/%s/collection' % username, headers=headers, params=params)
+		print(r.text)
+
+class UserGroup:
+	""" """
+	def __init__(self):
+		self.type_id = 0
+		self.type = self.get_type(self.type_id)
+
+	def get_type(self, type_id):
+		chart = ['','管理员','Bangumi 管理猿','天窗管理猿','禁言用户','禁止访问用户','','','人物管理猿','维基条目管理猿','用户','维基人']
+		self.type = chart[type_id]		
+
+class StatusCode:
+	"""
+	Response Status, HTTP codes are all 200
+	"""
+	def __init__(self):
+		self.request = ''
+		self.code = 0
+		self.error = ''
+
+class Avatar:
+	"""头像"""
+	def __init__(self):
+		self.large = ''
+		self.medium = ''
+		self.small = ''
 
 
 
