@@ -17,3 +17,5 @@ usr.get_user('butanediol')
 # print(usr.usergroup.type_id)
 
 usr.get_user_collection()
+print(usr.collections[0].subject.id)
+print(usr.collections[1].subject.collection)

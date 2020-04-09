@@ -36,6 +36,20 @@ class CollectionStatus:
 		self.id = 0
 		self.type = chart[str(self.id)]['type']
 		self.name = chart[str(self.id)]['name']
+
+class Collection:
+	"""
+	用户收藏的动画/书籍
+	"""
+	def __init__(self):
+		is_book = False
+		self.name = ''
+		self.subject_id = 0
+		self.ep_status = 0
+		self.vol_status = 0
+		self.lasttouch = 0
+		self.subject = SubjectSmall()
+
 class EpStatus:
 
 	def __init__(self):
@@ -60,6 +74,7 @@ class EpStatus:
 		self.id = 0
 		self.type = chart[str(self.id)]['type']
 		self.name = chart[str(self.id)]['name']
+
 class MonoBase:
 	"""
 	Character (Base Model)
@@ -73,6 +88,7 @@ class MonoBase:
 		self.url = ''
 		self.name = ''
 		self.images = {}
+
 class Alias:
 	"""
 	:attribute jp: String, Japanese name
@@ -88,6 +104,7 @@ class Alias:
 		self.romaji = ''
 		self.zh = ''
 		self.other = ''
+
 class Mono(MonoBase):
 	"""
 	Character (Inherited from MonoBase)
@@ -100,6 +117,7 @@ class Mono(MonoBase):
 		self.name_cn = ''
 		self.comment = 0
 		self.collects = 0
+
 class MonoInfo(Mono):
 	"""
 	Character Info (Inherited from Mono)
@@ -118,6 +136,7 @@ class MonoInfo(Mono):
 		self.alias = Alias()
 		self.source = {}
 		self.cv = ''
+
 class Person:
 	"""
 	Real person
@@ -139,6 +158,7 @@ class Person:
 		self.comment = 0
 		self.collects = 0
 		self.info = MonoInfo()
+
 class Character:
 	"""
 	Virtual character
@@ -162,6 +182,7 @@ class Character:
 		self.collects = 0
 		self.info = MonoInfo()
 		self.actors = []
+
 class Episode:
 	"""
 	Episode infomation
@@ -238,11 +259,18 @@ class SubjectCollection:
 	Number of collection status
 	"""
 	def __init__(self):
-		self.wish = 0
-		self.collect = 0
-		self.doing = 0
-		self.on_hold = 0
-		self.dropped = 0
+		self.wish = -1
+		self.collect = -1
+		self.doing = -1
+		self.on_hold = -1
+		self.dropped = -1
+
+	def set(self, collection):
+		if 'wish' in collection.keys(): self.wish = collection['wish']
+		if 'collect' in collection.keys(): self.collect = collection['collect']
+		if 'doing' in collection.keys(): self.doing = collection['doing']
+		if 'on_hold' in collection.keys(): self.on_hold = collection['on_hold']
+		if 'dropped' in collection.keys(): self.dropped = collection['dropped']
 
 class Subject:
 	"""
@@ -267,7 +295,7 @@ class SubjectBase:
 		self.summary = ''
 		self.air_date = ''
 		self.air_weekday = 0
-		self.images = {}
+		self.images = Images()
 
 class SubjectSmall(SubjectBase):
 	"""
@@ -279,7 +307,7 @@ class SubjectSmall(SubjectBase):
 		self.eps_count = 0
 		self.rating = {}
 		self.rank = 0
-		self.collection = SubjectCollection()
+		self.collection = {}
 
 class SubjectMedium(SubjectSmall):
 	"""
@@ -305,6 +333,7 @@ class User:
 		self.avatar = Avatar()
 		self.sign = ''
 		self.usergroup = UserGroup()
+		self.collections = []
 
 	def __check_username(self, username=''):
 		if username != '':
@@ -342,7 +371,36 @@ class User:
 			'responseGroup': response_group
 		}
 		r = requests.get(API_URL + '/user/%s/collection' % username, headers=headers, params=params)
-		print(r.text)
+		loaded = json.loads(r.text)
+
+		for collection in loaded:
+			new_collection = Collection()
+			new_collection.name = collection['name']
+			new_collection.subject_id = collection['subject_id']
+			if 'ep_status' in collection.keys():
+				new_collection.ep_status = collection['ep_status']
+			if 'vol_status' in collection.keys():
+				new_collection.is_book = True
+				new_collection.vol_status = collection['vol_status']
+			new_collection.lasttouch = collection['lasttouch']
+			new_collection.subject.id = collection['subject']['id']
+			new_collection.subject.url = collection['subject']['url']
+			new_collection.subject.type = collection['subject']['type']
+			new_collection.subject.name = collection['subject']['name']
+			new_collection.subject.name_cn = collection['subject']['name_cn']
+			new_collection.subject.summary = collection['subject']['summary']
+			new_collection.subject.eps = collection['subject']['eps']
+			new_collection.subject.eps_count = collection['subject']['eps_count']
+			new_collection.subject.air_date = collection['subject']['air_date']
+			new_collection.subject.air_weekday = collection['subject']['air_weekday']
+			new_collection.subject.images.large = collection['subject']['images']['large']
+			new_collection.subject.images.common = collection['subject']['images']['common']
+			new_collection.subject.images.medium = collection['subject']['images']['medium']
+			new_collection.subject.images.small = collection['subject']['images']['small']
+			new_collection.subject.images.grid = collection['subject']['images']['grid']
+			new_collection.subject.collection = collection['subject']['collection']
+			self.collections.append(new_collection)
+			print(collection['name'])
 
 class UserGroup:
 	""" """
@@ -370,7 +428,16 @@ class Avatar:
 		self.medium = ''
 		self.small = ''
 
-
+class Images:
+	"""
+	番剧图片
+	"""
+	def __init__(self):
+		self.large = ''
+		self.common = ''
+		self.medium = ''
+		self.small = ''
+		self.grid = ''
 
 
 
